@@ -1,0 +1,45 @@
+$Right="Modify"
+$Name =@()
+$Principal1 =@()
+$Principal2 =@()
+$Principal3 =@()
+
+#Get path to .csv file
+$CSVPath=Read-Host "Where is the CSV file located?"
+
+Import-CSV $CSVPath |
+  ForEach-Object {
+    $Name += $_.FullName
+    $Principal1 +=_.Principal1
+    $Principal2 +=_.Principal2
+    $Principal3 +=_.Principal3
+  }
+  
+#Get starting Dir
+$StartingDir=Read-Host "What Directory do you want to start at?"
+
+foreach($file in $(Get-ChildItem $StartingDir -recurse)){
+    #Get first folder
+    $acl=get-acl $file.FullName
+
+    if ($Name -contains $file.FullName){
+
+      $Where = [array]::IndexOf($Name, $file.FullName)
+
+      if($Principal3[$Where]){
+        $rule=new-object System.Security.AccessControl.FileSystemAccessRule($Principal3[$Where],$Right, "Allow")
+        $acl.SetAccessRule($rule)
+      } Else if ($Principal2[$Where]){
+        $rule=new-object System.Security.AccessControl.FileSystemAccessRule($Principal2[$Where],$Right, "Allow")
+        $acl.SetAccessRule($rule)
+      } Else if ($Principal1[$Where]){
+        $rule=new-object System.Security.AccessControl.FileSystemAccessRule($Principal1[$Where],$Right, "Allow")
+        $acl.SetAccessRule($rule)
+      } Else {
+        $rule=new-object System.Security.AccessControl.FileSystemAccessRule($Name[$Where],$Right, "Allow")
+        $acl.SetAccessRule($rule)
+      }
+
+      set-acl $File.Fullname $acl
+    }
+}
